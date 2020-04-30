@@ -1,0 +1,10 @@
+FROM debian:9.11
+
+RUN apt-get update \
+    && apt-get install -y locales fonts-arphic-uming fontconfig xfonts-utils microdnf \
+    && sed -ie 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/g' /etc/locale.gen \
+    && sed -ie 's/# zh_TW BIG5/zh_TW BIG5/g' /etc/locale.gen \
+    && locale-gen
+
+ENV LC_ALL=zh_TW.big5 \
+    LANG=zh_TW.big5

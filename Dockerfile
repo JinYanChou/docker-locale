@@ -9,21 +9,21 @@
 
 ########
 
-# FROM alpine
-# 
-# RUN apk --no-cache add ca-certificates wget \
-#     && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-#     && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-2.31-r0.apk \
-# 	&& wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-bin-2.31-r0.apk \
-#     && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-i18n-2.31-r0.apk \
-#     && apk add glibc-2.31-r0.apk glibc-bin-2.31-r0.apk glibc-i18n-2.31-r0.apk \
-#     && /usr/glibc-compat/bin/localedef -i zh_TW -f BIG5 zh_TW.BIG5
-# 
-# ENV PATH=/usr/glibc-compat/bin:$PATH \
-#     LC_ALL=zh_TW.big5 \
-#     LANG=zh_TW.big5
-# 
-# ADD test.tar .
+FROM alpine
+
+RUN apk --no-cache add ca-certificates wget \
+    && wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+    && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-2.31-r0.apk \
+    && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-bin-2.31-r0.apk \
+    && wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-i18n-2.31-r0.apk \
+    && apk add glibc-2.31-r0.apk glibc-bin-2.31-r0.apk glibc-i18n-2.31-r0.apk \
+    && /usr/glibc-compat/bin/localedef -i zh_TW -f BIG5 zh_TW.BIG5
+
+ENV PATH=/usr/glibc-compat/bin:$PATH \
+    LC_ALL=zh_TW.big5 \
+    LANG=zh_TW.big5
+
+ADD test.tar .
 
 
 ########
@@ -58,15 +58,77 @@
 # 
 # ADD test.tar .
 
+# FROM debian:9.11 as TEMP
+# 
+# RUN apt-get update \
+#     && apt-get install -y locales fonts-arphic-uming fontconfig xfonts-utils \
+#     && sed -ie 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/g' /etc/locale.gen \
+#     && sed -ie 's/# zh_TW BIG5/zh_TW BIG5/g' /etc/locale.gen \
+#     && locale-gen
+# 
+# FROM gcr.io/distroless/java:8-debug
+# 
+# COPY --from=TEMP /usr/lib/x86_64-linux-gnu/libfontconfig.so.1 /usr/lib/x86_64-linux-gnu/libfontconfig.so.1
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libpthread.so.0 /lib/x86_64-linux-gnu/libpthread.so.0
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6
+# COPY --from=TEMP /usr/lib/x86_64-linux-gnu/libfreetype.so.6 /usr/lib/x86_64-linux-gnu/libfreetype.so.6
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libexpat.so.1 /lib/x86_64-linux-gnu/libexpat.so.1
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libz.so.1 /lib/x86_64-linux-gnu/libz.so.1
+# COPY --from=TEMP /usr/lib/x86_64-linux-gnu/libpng16.so.16 /usr/lib/x86_64-linux-gnu/libpng16.so.16
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libm.so.6 /lib/x86_64-linux-gnu/libm.so.6
+# COPY --from=TEMP /usr/bin/fc-list /usr/bin/fc-list
+# COPY --from=TEMP /usr/bin/fc-cache /usr/bin/fc-cache
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libc.so.6 /lib/x86_64-linux-gnu/libc.so.6
+# COPY --from=TEMP /lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2
+# COPY --from=TEMP /usr/bin/locale /usr/bin/locale
+# COPY --from=TEMP /usr/lib/locale /usr/lib/locale
+# 
+# COPY --from=TEMP /usr/share/fonts /usr/share/fonts
+# COPY --from=TEMP /usr/share/fontconfig /usr/share/fontconfig
+# COPY --from=TEMP /usr/lib/x86_64-linux-gnu/libfontconfig.so.1.8.0 /usr/lib/x86_64-linux-gnu/libfontconfig.so.1
+# 
+# COPY --from=TEMP /lib/x86_64-linux-gnu/libexpat.so.1 /lib/x86_64-linux-gnu/libexpat.so.1
+# COPY --from=TEMP /etc/fonts /etc/fonts
+# 
+# SHELL ["/busybox/sh", "-c"]
+# RUN echo $'\
+# import java.io.*;\n\
+# public class A {\n\
+#     public static void main(String... args) throws Exception {\n\
+#         System.out.println("file.encoding=" + System.getProperty("file.encoding"));\n\
+#         System.out.println("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));\n\
+#         System.out.println("LANG=" + System.getenv("LANG"));\n\
+#         System.out.println("\u65E5");\n\
+#         File myObj = new File("中文.txt");\n\
+#         System.out.println("中文字");\n\
+#         if (myObj.createNewFile()) {\n\
+#           System.out.println("File created: " + myObj.getName());\n\
+#         } else {\n\
+#           System.out.println("File already exists.");\n\
+#         }\n\
+#         System.out.println(new File("/20200420140802000228_團險保險費送金單.pdf").exists());\n\
+#         System.out.println(new File("/20200420090711000120_區部業績明細_202004_1090420.csv").exists());\n\
+#         String str = "菜";\n\
+#         byte[] big5Str=str.getBytes("big5");\n\
+#         byte[] utf8Str=str.getBytes("utf8");\n\
+#         byte[] deftStr=str.getBytes();\n\
+#         System.out.printf("%s \tbig5\tEncoding:",str);\n\
+#         for(byte b:big5Str) System.out.printf("%02X ",b);\n\
+#         System.out.println();\n\
+#         System.out.printf("%s \tutf-8\tEncoding:",str);\n\
+#         for(byte b:utf8Str) System.out.printf("%02X ",b);\n\
+#         System.out.println();\n\
+#         System.out.printf("%s \tdefault\tEncoding:",str);\n\
+#         for(byte b:deftStr) System.out.printf("%02X ",b);\n\
+#         System.out.println();\n\
+#     }\n\
+# }' > /A.java
 
+# ENV LANG=zh_TW.big5 \
+#     LC_ALL=zh_TW.big5
+# 
+# ENV JAVA_OPTS="-Ddb2.jcc.charsetDecoderEncoder=3 -Djavax.servlet.request.encoding=CP950 -Dfile.encoding=CP950"
 
-FROM debian:9.11
+# ADD test.tar .
 
-RUN apt-get update
-RUN apt-get install -y locales fonts-arphic-uming
-RUN sed -ie 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/g' /etc/locale.gen
-RUN sed -ie 's/# zh_TW BIG5/zh_TW BIG5/g' /etc/locale.gen
-RUN locale-gen
-ENV LANG zh_TW.UTF-8
-
-ADD test.tar .
+# ENTRYPOINT ["java", "/A.java"]
