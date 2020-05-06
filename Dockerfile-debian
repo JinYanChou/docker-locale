@@ -1,17 +1,58 @@
 FROM debian:9.11 AS TEMP
 
 RUN apt-get update \
-    && apt-get install -y locales fonts-arphic-uming fontconfig xfonts-utils vim openjdk-8-jdk \
+    && apt-get install -y locales fonts-arphic-uming fontconfig xfonts-utils vim openjdk-8-jre \
     && sed -ie 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/g' /etc/locale.gen \
     && sed -ie 's/# zh_TW BIG5/zh_TW BIG5/g' /etc/locale.gen \
     && locale-gen
 
-FROM gcr.io/distroless/java:8-debug
+FROM gcr.io/distroless/base-debian10:debug
 
 COPY --from=TEMP /usr/lib/locale /usr/lib/locale
 
 ENV LC_ALL=zh_TW.big5 \
-    LANG=zh_TW.big5
+    LANG=zh_TW.big5 \
+    JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 ADD test.tar .
 ADD CreateFile.class .
+
+
+# 
+# 
+# FROM debian:9.11 AS TEMP
+# 
+# ADD apache-tomcat-8.5.54.tar.gz /usr/local/
+# 
+# RUN mv /usr/local/apache-tomcat-8.5.54/ /usr/local/tomcat
+# 
+# ADD ./redisson/redisson.conf /usr/local/tomcat/
+# ADD ./redisson/jar/ /usr/local/tomcat/lib/
+# ADD ./edb-jdbc17.jar /usr/local/tomcat/lib/
+# ADD ./charsets.jar /usr/lib/jvm/java-8-openjdk-jre/jre/lib/charsets.jar
+# 
+# RUN apt-get update \
+#     && apt-get install -y locales \
+#     && sed -ie 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/g' /etc/locale.gen \
+#     && sed -ie 's/# zh_TW BIG5/zh_TW BIG5/g' /etc/locale.gen \
+#     && locale-gen
+# 
+# FROM gcr.io/distroless/base-debian10:debug
+# 
+# ADD openjdk-8-jre.tar.gz .
+# RUN mv java-se-8u41-ri /usr/local/java
+# 
+# COPY --from=TEMP /usr/lib/locale /usr/lib/locale
+# COPY --from=TEMP /usr/local/tomcat /usr/local/tomcat
+# 
+# ENV LC_ALL=zh_TW.big5 \
+#     LANG=zh_TW.big5 \
+#     JAVA_OPTS="-Ddb2.jcc.charsetDecoderEncoder=3 -Djavax.servlet.request.encoding=CP950 -Dfile.encoding=CP950" \
+#     TOMCAT_OPTS="-Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.endorsed.dirs=/usr/local/tomcat/endorsed -classpath /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/usr/local/tomcat -Dcatalina.home=/usr/local/tomcat -Djava.io.tmpdir=/usr/local/tomcat/temp"
+# 
+# EXPOSE 8080
+# # ENTRYPOINT tail -f /usr/local/tomcat/logs/catalina.out
+# # ENTRYPOINT /usr/bin/java -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.endorsed.dirs=/usr/local/tomcat/endorsed -classpath /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/usr/local/tomcat -Dcatalina.home=/usr/local/tomcat -Djava.io.tmpdir=/usr/local/tomcat/temp org.apache.catalina.startup.Bootstrap start
+# # ENTRYPOINT java
+# # CMD ["-version"]
+# 
