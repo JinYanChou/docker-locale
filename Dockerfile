@@ -23,9 +23,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
 
 ADD ./redisson.conf /usr/local/tomcat/
 ADD ./tomcat-jar/ /usr/local/tomcat/lib/
-ADD ./charsets.jar /usr/lib/jvm/java-8-openjdk-jre/jre/lib/charsets.jar
+ADD ./charsets.jar /usr/local/openjdk-8/lib/charsets.jar
 
-USER wasadmin
 WORKDIR /usr/local/tomcat
 EXPOSE 8080
 ENTRYPOINT /usr/local/tomcat/bin/startup.sh && tail -f /usr/local/tomcat/logs/catalina.out
